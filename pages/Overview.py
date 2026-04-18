@@ -3,7 +3,7 @@ import pandas as pd
 
 st.set_page_config(page_title="Overview", layout="wide")
 st.title("Overview")
-st.caption("Sprint 2")
+st.caption("A showcase of all quality flags and the missingness table.")
 
 df = st.session_state.get("df", None)
 dataset_name = st.session_state.get("dataset_name", "Uploaded dataset")
@@ -25,7 +25,7 @@ def dataset_summary(df: pd.DataFrame) -> dict:
         "Rows": n_rows,
         "Columns": n_cols,
         "Missing Cells": n_missing,
-        "Missing PCT": pct_missing,
+        "Missing %": pct_missing,
         "Duplicates": duplicates,
         "Empty Columns": empty_cols,
         "Constant Columns": int(constant_cols),
@@ -36,9 +36,9 @@ def missingness_by_column(df: pd.DataFrame) -> pd.DataFrame:
     miss_pct = (df.isna().mean() * 100).sort_values(ascending=False)
     out = pd.DataFrame({#
         "Missing Count": miss_count,
-        "Missing PCT": miss_pct
+        "Missing %": miss_pct
     })
-    out["Missing PCT"] = out["Missing PCT"].round(2)
+    out["Missing %"] = out["Missing %"].round(2)
     out.index.name = "Column"
     return out
 
@@ -60,7 +60,7 @@ st.write(f"**Dataset:** {dataset_name}")
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Rows", f"{summary['Rows']:,}")
 col2.metric("Columns", f"{summary['Columns']:,}")
-col3.metric("Missing Cells", f"{summary['Missing Cells']:,} ({summary['Missing PCT']:.2f}%)")
+col3.metric("Missing Cells", f"{summary['Missing Cells']:,} ({summary['Missing %']:.2f}%)")
 col4.metric("Duplicates", f"{summary['Duplicates']:,}")
 
 st.subheader("Flagged Quality Issues")
@@ -70,8 +70,8 @@ if summary["Empty Columns"] > 0:
     flags.append(f"{summary['Empty Columns']} columns are completely empty")
 if summary["Constant Columns"] > 0:
     flags.append(f"{summary['Constant Columns']} columns contain single repeated value")
-if summary["Missing PCT"] >= 10:
-    flags.append(f"{summary['Missing PCT']:.2f}% of cells are missing")
+if summary["Missing %"] >= 10:
+    flags.append(f"{summary['Missing %']:.2f}% of cells are missing")
 if summary["Duplicates"] > 0:
     flags.append(f"{summary['Duplicates']:,} duplicate detected")
 
@@ -87,9 +87,10 @@ max_show = min(30, summary["Columns"])
 top_n = st.slider("Show top N columns with highest missingness", min_value=5, max_value=max_show, value=min(10, max_show))
 st.dataframe(miss_table.head(top_n), use_container_width=True)
 st.write("**Missingness chart (top columns)**")
-st.bar_chart(miss_table.head(top_n)["Missing PCT"])
+st.bar_chart(miss_table.head(top_n)[["Missing %"]])
 st.subheader("Schema Summary")
 st.write("Overview of column data types and uniqueness")
+st.caption("This table shows the data type of each column, the count of non-null values, and the count of unique non-null values. Columns with low uniqueness may be candidates for removal or special handling.")
 st.dataframe(schema_table, use_container_width=True)
 
 with st.expander("Preview dataset (first 10 rows)"):

@@ -3,7 +3,6 @@ import pandas as pd
 
 st.set_page_config(page_title="Demographics", layout="wide")
 st.title("Demographics")
-st.caption("Sprint 2")
 
 df = st.session_state.get("df")
 if df is None:
