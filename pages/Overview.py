@@ -5,6 +5,8 @@ st.set_page_config(page_title="Overview", layout="wide")
 st.title("Overview")
 st.caption("A showcase of all quality flags and the missingness table.")
 
+# Retrieve the DataFrame from session state — st.stop() halts the page
+# if no dataset has been uploaded yet, preventing errors downstream.
 df = st.session_state.get("df", None)
 dataset_name = st.session_state.get("dataset_name", "Uploaded dataset")
 
@@ -12,6 +14,8 @@ if df is None:
     st.warning("Please upload a dataset first!")
     st.stop()
 
+# df.isna().sum().sum() counts all missing cells across every column at once.
+# n_cells guards against division by zero for empty datasets.
 def dataset_summary(df: pd.DataFrame) -> dict:
     n_rows, n_cols = df.shape
     n_missing = int(df.isna().sum().sum())
@@ -31,6 +35,8 @@ def dataset_summary(df: pd.DataFrame) -> dict:
         "Constant Columns": int(constant_cols),
     }
 
+# Multiplying by 100 converts it to a percentage, then sort_values puts the
+# worst columns at the top of the table automatically.
 def missingness_by_column(df: pd.DataFrame) -> pd.DataFrame:
     miss_count = df.isna().sum().sort_values(ascending=False)
     miss_pct = (df.isna().mean() * 100).sort_values(ascending=False)
@@ -65,6 +71,9 @@ col4.metric("Duplicates", f"{summary['Duplicates']:,}")
 
 st.subheader("Flagged Quality Issues")
 
+# Each condition appends a plain-language message to the flags list.
+# If no conditions are triggered the list stays empty and a success
+# message is shown instead
 flags = []
 if summary["Empty Columns"] > 0:
     flags.append(f"{summary['Empty Columns']} columns are completely empty")
@@ -83,6 +92,8 @@ else:
 
 st.subheader("Missingness by Column")
 
+# The slider lets users control how many columns are shown without
+# overwhelming them — capped at 30 to keep the chart readable.
 max_show = min(30, summary["Columns"])
 top_n = st.slider("Show top N columns with highest missingness", min_value=5, max_value=max_show, value=min(10, max_show))
 st.dataframe(miss_table.head(top_n), use_container_width=True)

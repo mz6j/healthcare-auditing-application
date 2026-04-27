@@ -8,6 +8,8 @@ st.set_page_config(
     layout="wide"
 )
 
+# Reads the CSS file and injects it into the page using a <style> tag.
+# The try/except ensures the app still loads even if the CSS file is missing.
 def load_css(path: str) -> None:
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -17,6 +19,8 @@ def load_css(path: str) -> None:
 
 load_css("assets/style.css")
 
+# Converts the uploaded file into a pandas DataFrame based on its extension.
+# .lower() is used so that files named .CSV or .XLSX are still recognised correctly.
 def read_uploaded_file(uploaded_file) -> pd.DataFrame:
     if uploaded_file is None:
         return pd.DataFrame()
@@ -53,18 +57,21 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""
-<div class="uplaod-panel>
+<div class="upload-panel">
     <h2>Upload a dataset</h2>
-    <h3>Please ensure it is a CSV or Exx=cel file</h3>
+    <h3>Please ensure it is a CSV or Excel file</h3>
 </div>
 """, unsafe_allow_html=True)
 
+# Restricts uploads to CSV and Excel only
 uploaded = st.file_uploader(
     label="",
     type=["csv", "xlsx", "xls"],
     accept_multiple_files=False
 )
-      
+
+# Streamlit re-runs the entire script on every interaction, session state is used to persist
+#  the uploaded DataFrame and its name across interactions without needing to re-upload.     
 if "df" not in st.session_state:
     st.session_state["df"] = None
 if "dataset_name" not in st.session_state:
@@ -72,6 +79,7 @@ if "dataset_name" not in st.session_state:
 
 if uploaded is not None:
     try:
+        # Store both the DataFrame and filename so all other pages can access them.
         df = read_uploaded_file(uploaded)
         st.session_state["df"] = df
         st.session_state["dataset_name"] = uploaded.name
